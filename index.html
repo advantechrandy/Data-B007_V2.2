@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熱管原理應用解析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 使用 MathJax 渲染高品質公式 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* 工業風格深色漸層 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        /* 熱管動態圖示樣式 */
+        .heatpipe-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            background: #1e293b;
+            border-radius: 60px;
+            border: 4px solid #475569;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .steam-flow {
+            position: absolute;
+            height: 40%;
+            width: 20px;
+            background: rgba(248, 113, 113, 0.5);
+            filter: blur(8px);
+            border-radius: 50%;
+            animation: flowRight 2s infinite linear;
+        }
+        .liquid-return {
+            position: absolute;
+            bottom: 15px;
+            height: 8px;
+            width: 15px;
+            background: #60a5fa;
+            border-radius: 50%;
+            animation: flowLeft 3s infinite linear;
+        }
+        @keyframes flowRight {
+            0% { left: 10%; opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { left: 85%; opacity: 0; transform: scale(0.5); }
+        }
+        @keyframes flowLeft {
+            0% { left: 85%; opacity: 0.8; }
+            100% { left: 10%; opacity: 0.8; }
+        }
+        .zone-label {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        /* 圖片顯示最佳化 */
+        .full-width-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            background-color: white;
+            border-radius: 1rem;
+            border: 2px solid #334155;
+        }
+
+        .industrial-table {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .industrial-table th {
+            background-color: #334155;
+            color: #f1f5f9;
+        }
+        .industrial-table td, .industrial-table th {
+            border: 1px solid #475569;
+        }
+
+        /* 應用標籤 */
+        .app-tag {
+            background: #334155;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        /* 影片連結按鈕樣式 */
+        .video-btn {
+            display: inline-flex;
+            align-items: center;
+            background: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-top: 1.5rem;
+        }
+        .video-btn:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<!-- 停用右鍵功能 -->
+<body class="bg-slate-900 text-slate-200" oncontextmenu="return false;">
+
+    <!-- Header -->
+    <header class="gradient-bg text-white py-20 px-6 text-center border-b border-slate-700">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight">熱管 (Heat Pipe) 原理應用說明 V2.2</h1>
+        <p class="text-xl text-slate-400">高效能工業冷卻與導熱核心元件</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="sticky-nav shadow-lg border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-around py-4 text-sm md:text-base font-medium">
+                <a href="#principles" class="text-slate-300 hover:text-blue-400 transition">運作原理</a>
+                <a href="#structure" class="text-slate-300 hover:text-blue-400 transition">結構分析</a>
+                <a href="#process" class="text-slate-300 hover:text-blue-400 transition">製造流程</a>
+                <a href="#applications" class="text-slate-300 hover:text-blue-400 transition">產業應用</a>
+                <a href="#proscons" class="text-slate-300 hover:text-blue-400 transition">優缺點分析</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-6 py-16">
+
+        <!-- Principles Section -->
+        <section id="principles" class="mb-24 text-center">
+            <div class="flex items-center mb-10 text-left">
+                <div class="w-2 h-8 bg-blue-500 mr-4"></div>
+                <h2 class="text-3xl font-bold text-white">1. 運作原理 (Working Principles)</h2>
+            </div>
+            
+            <div class="mb-6 bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700">
+                <h3 class="text-center text-slate-400 text-sm mb-6">熱循環動態示意圖 (蒸發段 → 冷凝段)</h3>
+                <div class="heatpipe-container">
+                    <div class="zone-label bg-red-900/50 text-red-400 left-4 border border-red-500/30">蒸發段 (Hot)</div>
+                    <div class="zone-label bg-blue-900/50 text-blue-400 right-4 border border-blue-500/30">冷凝段 (Cold)</div>
+                    <div class="steam-flow" style="animation-delay: 0s;"></div>
+                    <div class="steam-flow" style="animation-delay: 0.5s;"></div>
+                    <div class="steam-flow" style="animation-delay: 1s;"></div>
+                    <div class="liquid-return" style="animation-delay: 0s;"></div>
+                    <div class="liquid-return" style="animation-delay: 1s;"></div>
+                    <div class="liquid-return" style="animation-delay: 2s;"></div>
+                </div>
+
+                <!-- 影片連結按鈕 -->
+                <a href="https://youtu.be/51bwzEO8XCw" target="_blank" class="video-btn">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 4-8 4z"/></svg>
+                    熱管原理說明影片
+                </a>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-10 items-start text-left">
+                <div>
+                    <p class="text-lg leading-relaxed mb-6 text-slate-300">
+                        熱管利用 <strong>相變（Phase Change）</strong> 過程傳熱。其導熱性能來自工質在高真空下的汽化潛熱。
+                    </p>
+                    <ul class="space-y-4 text-slate-400 text-sm">
+                        <li><strong>蒸發段：</strong>吸收熱源能量，工質由液態轉為氣態（吸熱）。</li>
+                        <li><strong>絕熱段：</strong>蒸汽在微小壓力差驅動下，流向冷端。</li>
+                        <li><strong>冷凝段：</strong>蒸汽與壁面接觸冷卻，釋放潛熱轉回液態（放熱）。</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-black/40 text-white p-8 rounded-2xl border-l-4 border-blue-500 border border-slate-700 text-center">
+                    <h3 class="text-blue-400 font-bold mb-6">熱傳遞核心物理公式</h3>
+                    <div class="text-2xl mb-4 font-mono">
+                        $$ Q = \dot{m} \cdot \lambda $$
+                    </div>
+                    <p class="text-xs text-slate-500 italic">Q: 功率 | ṁ: 循環速率 | λ: 汽化潛熱</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Structure Analysis Section -->
+        <section id="structure" class="mb-24">
+            <div class="flex items-center mb-10">
+                <div class="w-2 h-8 bg-amber-500 mr-4"></div>
+                <h2 class="text-3xl font-bold text-white">2. 管壁與毛細結構分析 (Wick Structures)</h2>
+            </div>
+            
+            <div class="mb-10 text-center">
+                <img src="https://www.tglobalcorp.com/upload/news_faq_b/twL_news_faq_24B22_xTTyhK6qJd.jpg" alt="熱管結構對照圖 (由左至右：Grooved / Sintered / Mesh)" class="full-width-image shadow-2xl mx-auto">
+                <p class="mt-4 text-sm text-slate-400 font-medium">結構對照（由左至右）：溝槽式 (Grooved) / 燒結式 (Sintered) / 絲網式 (Mesh)</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6 rounded-xl shadow-lg">
+                    <span class="text-xl font-bold text-amber-500 font-mono">Grooved</span>
+                    <p class="text-xs font-bold text-amber-200 uppercase mb-4">溝槽式結構 (圖左)</p>
+                    <ul class="text-sm space-y-2 text-slate-400">
+                        <li><strong>優點：</strong> 製造最簡單、成本最低。</li>
+                        <li><strong>缺點：</strong> 毛細力弱，無法抗重力，適合水平放置。</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-xl shadow-lg border-2 border-amber-500/50">
+                    <span class="text-xl font-bold text-amber-400 font-mono">Sintered</span>
+                    <p class="text-xs font-bold text-amber-200 uppercase mb-4">燒結粉末結構 (圖中)</p>
+                    <ul class="text-sm space-y-2 text-slate-400">
+                        <li><strong>優點：</strong> 毛細力強，抗重力性能最優。</li>
+                        <li><strong>缺點：</strong> 成本高，製程複雜，需精確控制粉末粒徑。</li>
+                    </ul>
+                </div>
+
+                <div class="card p-6 rounded-xl shadow-lg">
+                    <span class="text-xl font-bold text-amber-500 font-mono">Mesh</span>
+                    <p class="text-xs font-bold text-amber-200 uppercase mb-4">絲網式結構 (圖右)</p>
+                    <ul class="text-sm space-y-2 text-slate-400">
+                        <li><strong>優點：</strong> 製造成熟、具備良好彈性，耐彎折加工。</li>
+                        <li><strong>缺點：</strong> 抗重力表現普通，介於溝槽與燒結之間。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 overflow-x-auto rounded-xl border border-slate-700">
+                <table class="w-full text-sm text-left border-collapse industrial-table">
+                    <thead>
+                        <tr>
+                            <th class="p-5 border">性能指標</th>
+                            <th class="p-5 border">溝槽 (Grooved)</th>
+                            <th class="p-5 border text-amber-400">燒結 (Sintered)</th>
+                            <th class="p-5 border">網狀 (Mesh)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-400">
+                        <tr>
+                            <td class="p-5 border font-bold text-slate-300">抗重力表現</td>
+                            <td class="p-5 border text-rose-400 text-center font-bold">❌ 差</td>
+                            <td class="p-5 border text-amber-400 text-center font-bold">⭐ 優異</td>
+                            <td class="p-5 border text-center font-bold">▲ 良</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 製造流程 Section -->
+        <section id="process" class="mb-24 bg-slate-800/50 p-10 rounded-3xl border border-slate-700">
+            <div class="flex items-center mb-10">
+                <div class="w-2 h-8 bg-emerald-500 mr-4"></div>
+                <h2 class="text-3xl font-bold text-white">3. 製造流程 (Manufacturing Process)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+                <div class="card p-8 rounded-xl">
+                    <h3 class="font-bold text-xl mb-4 text-emerald-400">1. 管材預處理</h3>
+                    <p class="text-slate-400">挑選高純度無氧銅管，進行切割、清洗及去油汙，確保內壁潔淨度。</p>
+                </div>
+                <div class="card p-8 rounded-xl">
+                    <h3 class="font-bold text-xl mb-4 text-emerald-400">2. 毛細結構製作</h3>
+                    <p class="text-slate-400">依需求植入燒結銅粉、拉出溝槽或編織網狀結構，並進行高溫燒結固化。</p>
+                </div>
+                <div class="card p-8 rounded-xl border-emerald-500/30">
+                    <h3 class="font-bold text-xl mb-4 text-emerald-400">3. 抽真空與充填</h3>
+                    <div class="text-slate-400 space-y-2">
+                        <p>排除管內空氣，精準充入微量工質（如去離子水），隨即封口焊接。</p>
+                        <div class="pt-2 border-t border-slate-700 mt-2">
+                            <p class="text-emerald-300 font-bold text-xs uppercase">關鍵注意事項：</p>
+                            <ul class="list-disc list-inside text-xs space-y-1">
+                                <li><strong>真空度：</strong> 須達 $$10^{-4} \text{ Torr}$$ 以下，降低不凝結氣體影響熱阻。</li>
+                                <li><strong>充填量：</strong> 須精確控制「飽和充填率」，<strong>建議值為 90% ~ 110%</strong>；過多會淹沒蒸發段導致阻力增加，過少會導致局部乾燒。</li>
+                                <li><strong>焊接強度：</strong> 封口處須承受管內相變產生的內壓變化。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 產業應用 Section -->
+        <section id="applications" class="mb-24">
+            <div class="flex items-center mb-10">
+                <div class="w-2 h-8 bg-indigo-500 mr-4"></div>
+                <h2 class="text-3xl font-bold text-white">4. 產業應用 (Industry Applications)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-8 rounded-2xl">
+                    <h3 class="text-xl font-bold text-white mb-4">電子設備散熱</h3>
+                    <p class="text-slate-400 text-sm mb-6">筆記型電腦、顯示卡及高性能伺服器。透過熱管將晶片（CPU/GPU）熱量快速傳導至遠端散熱鰭片。</p>
+                    <div class="flex flex-wrap">
+                        <span class="app-tag">CPU Cooler</span>
+                        <span class="app-tag">Smartphone VC</span>
+                        <span class="app-tag">Gaming Laptop</span>
+                    </div>
+                </div>
+                <div class="card p-8 rounded-2xl">
+                    <h3 class="text-xl font-bold text-white mb-4">交通與通訊</h3>
+                    <p class="text-slate-400 text-sm mb-6">5G 基站設備、電動車電池管理系統 (BMS) 以及航太衛星冷卻系統。</p>
+                    <div class="flex flex-wrap">
+                        <span class="app-tag">5G Base Station</span>
+                        <span class="app-tag">EV Battery</span>
+                        <span class="app-tag">Aerospace</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 優缺點分析 Section -->
+        <section id="proscons" class="mb-24">
+            <div class="flex items-center mb-10">
+                <div class="w-2 h-8 bg-rose-500 mr-4"></div>
+                <h2 class="text-3xl font-bold text-white">5. 優缺點分析 (Pros & Cons)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="p-8 rounded-2xl border border-emerald-900/50 bg-emerald-900/10">
+                    <h3 class="text-xl font-bold text-emerald-400 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        核心優點
+                    </h3>
+                    <ul class="space-y-4 text-sm text-slate-300">
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">●</span><strong>極高導熱性能：</strong> 傳熱速度是純銅的數百倍。</li>
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">●</span><strong>無功耗運作：</strong> 依靠物理相變，不需外部電力驅動。</li>
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2">●</span><strong>長壽命與穩定：</strong> 內部無移動零件，理論壽命極長。</li>
+                    </ul>
+                </div>
+                <div class="p-8 rounded-2xl border border-rose-900/50 bg-rose-900/10">
+                    <h3 class="text-xl font-bold text-rose-400 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        限制與挑戰
+                    </h3>
+                    <ul class="space-y-4 text-sm text-slate-300">
+                        <li class="flex items-start"><span class="text-rose-500 mr-2">●</span><strong>熱極限（Dry-out）：</strong> 超過負荷時，液體無法及時回流會導致失效。</li>
+                        <li class="flex items-start"><span class="text-rose-500 mr-2">●</span><strong>製造成本：</strong> 抽真空與精密封合技術導致單價較高。</li>
+                        <li class="flex items-start"><span class="text-rose-500 mr-2">●</span><strong>形狀敏感性：</strong> 過度彎折可能破壞內壁毛細結構。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-black py-12 px-6 text-center border-t border-slate-800">
+        <p class="text-slate-500 text-sm">Created by Randy Chen &copy; 2026</p>
+    </footer>
+
+</body>
+</html>
